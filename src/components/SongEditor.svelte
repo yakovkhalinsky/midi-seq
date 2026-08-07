@@ -39,9 +39,17 @@
 </script>
 
 <div class="song-editor">
-  <div class="mode-switch">
-    <button class:active={project.playMode === 'loop'} onclick={() => setPlayMode('loop')}>Loop</button>
-    <button class:active={project.playMode === 'song'} onclick={() => setPlayMode('song')}>Song</button>
+  <div class="mode-switch" role="group" aria-label="Play mode">
+    <button
+      class:active={project.playMode === 'loop'}
+      aria-pressed={project.playMode === 'loop'}
+      onclick={() => setPlayMode('loop')}
+    >Loop</button>
+    <button
+      class:active={project.playMode === 'song'}
+      aria-pressed={project.playMode === 'song'}
+      onclick={() => setPlayMode('song')}
+    >Song</button>
   </div>
 
   {#if project.playMode === 'song'}
@@ -68,9 +76,21 @@
             />
           </label>
           <div class="slot-actions">
-            <button onclick={() => moveSlot(i, -1)} disabled={i === 0}>↑</button>
-            <button onclick={() => moveSlot(i, 1)} disabled={i === project.song.length - 1}>↓</button>
-            <button class="danger" onclick={() => removeSlot(i)}>×</button>
+            <button
+              onclick={() => moveSlot(i, -1)}
+              disabled={i === 0}
+              aria-label={`Move slot ${i + 1} up`}
+            >↑</button>
+            <button
+              onclick={() => moveSlot(i, 1)}
+              disabled={i === project.song.length - 1}
+              aria-label={`Move slot ${i + 1} down`}
+            >↓</button>
+            <button
+              class="danger"
+              onclick={() => removeSlot(i)}
+              aria-label={`Remove slot ${i + 1}`}
+            >×</button>
           </div>
         </div>
       {/each}

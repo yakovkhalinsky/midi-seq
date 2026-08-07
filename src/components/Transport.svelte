@@ -54,7 +54,11 @@
     <span>{Math.round(swing * 100)}%</span>
   </div>
 
-  <button class:active={midiClock} onclick={onMidiClockToggle}>
+  <button
+    class:active={midiClock}
+    aria-pressed={midiClock}
+    onclick={onMidiClockToggle}
+  >
     MIDI Clock {midiClock ? 'On' : 'Off'}
   </button>
 </div>

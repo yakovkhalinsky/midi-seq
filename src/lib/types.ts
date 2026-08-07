@@ -52,6 +52,7 @@ export interface Pattern {
   id: string
   name: string
   tracks: Track[]
+  collapsedTracks?: Record<string, boolean>
 }
 
 export interface SongSlot {
@@ -68,6 +69,7 @@ export interface Project {
   song: SongSlot[]
   playMode: 'loop' | 'song'
   midiClock: boolean
+  sidePanelTab: 'song' | 'midi' | null
 }
 
 export const SCALE_INTERVALS: Record<ScaleMode, number[]> = {
@@ -197,6 +199,7 @@ export function createDefaultProject(): Project {
     ],
     playMode: 'loop',
     midiClock: false,
+    sidePanelTab: null,
   }
 }
 
@@ -208,6 +211,24 @@ export function updatePattern(project: Project, pattern: Pattern): Project {
   return {
     ...project,
     patterns: project.patterns.map((p) => (p.id === pattern.id ? pattern : p)),
+  }
+}
+
+export function setTrackCollapsed(
+  project: Project,
+  patternId: string,
+  trackId: string,
+  collapsed: boolean
+): Project {
+  return {
+    ...project,
+    patterns: project.patterns.map((p) => {
+      if (p.id !== patternId) return p
+      return {
+        ...p,
+        collapsedTracks: { ...p.collapsedTracks, [trackId]: collapsed },
+      }
+    }),
   }
 }
 

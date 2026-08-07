@@ -42,6 +42,7 @@
           <button
             class="action"
             title="Copy selected pattern here"
+            aria-label={`Copy selected pattern into ${pattern.name}`}
             onclick={() => handleCopyTarget(pattern.id)}
           >
             Cp
@@ -49,6 +50,7 @@
           <button
             class="action danger"
             title="Clear this pattern"
+            aria-label={`Clear pattern ${pattern.name}`}
             onclick={() => onClear(pattern.id)}
           >
             Cl

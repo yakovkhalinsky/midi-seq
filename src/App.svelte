@@ -10,14 +10,14 @@
     getSelectedPattern,
     updatePattern,
     duplicatePattern,
+    setTrackCollapsed,
   } from './lib/types'
   import { Scheduler } from './lib/scheduler'
   import { saveProject, loadProject } from './lib/storage'
   import Transport from './components/Transport.svelte'
   import MidiOutputSelector from './components/MidiOutputSelector.svelte'
   import PatternBank from './components/PatternBank.svelte'
-  import SongEditor from './components/SongEditor.svelte'
-  import ImportExportPanel from './components/ImportExportPanel.svelte'
+  import SidePanel from './components/SidePanel.svelte'
   import MelodicTrackEditor from './components/MelodicTrackEditor.svelte'
   import RhythmicTrackEditor from './components/RhythmicTrackEditor.svelte'
 
@@ -120,62 +120,103 @@
     }
   }
 
+  function setCollapsed(trackId: string, collapsed: boolean) {
+    updateProject(setTrackCollapsed(project, project.selectedPatternId, trackId, collapsed))
+  }
+
+  function collapseAll() {
+    const pattern = getSelectedPattern(project)
+    const collapsed: Record<string, boolean> = {}
+    pattern.tracks.forEach((t) => (collapsed[t.id] = true))
+    updateProject({
+      ...project,
+      patterns: project.patterns.map((p) =>
+        p.id === pattern.id ? { ...p, collapsedTracks: collapsed } : p
+      ),
+    })
+  }
+
+  function expandAll() {
+    const pattern = getSelectedPattern(project)
+    updateProject({
+      ...project,
+      patterns: project.patterns.map((p) =>
+        p.id === pattern.id ? { ...p, collapsedTracks: {} } : p
+      ),
+    })
+  }
+
   const selectedPattern = $derived(getSelectedPattern(project))
+  const showSidePanel = $derived(project.sidePanelTab !== null)
 </script>
 
+<a href="#tracks" class="skip-link">Skip to tracks</a>
+
 <main class="app">
-  <header class="masthead">
-    <h1>midi-seq</h1>
-    <p>2 melodic + 4 rhythmic tracks. Pattern banks. Song mode. External MIDI. Offline-ready.</p>
-  </header>
+  <aside class="sidebar" aria-label="Transport and song controls">
+    <div class="masthead">
+      <h1>midi-seq</h1>
+      <p>2 melodic + 4 rhythmic tracks. Pattern banks. Song mode. External MIDI. Offline-ready.</p>
+    </div>
 
-  <Transport
-    bpm={project.bpm}
-    swing={project.swing}
-    playing={scheduler.playing}
-    midiClock={project.midiClock}
-    onPlay={handlePlay}
-    onStop={handleStop}
-    onBpmChange={updateBpm}
-    onSwingChange={updateSwing}
-    onMidiClockToggle={toggleMidiClock}
-  />
+    <Transport
+      bpm={project.bpm}
+      swing={project.swing}
+      playing={scheduler.playing}
+      midiClock={project.midiClock}
+      onPlay={handlePlay}
+      onStop={handleStop}
+      onBpmChange={updateBpm}
+      onSwingChange={updateSwing}
+      onMidiClockToggle={toggleMidiClock}
+    />
 
-  <MidiOutputSelector
-    outputs={scheduler.outputs}
-    selectedId={selectedOutputId}
-    onSelect={handleOutputSelect}
-  />
+    <MidiOutputSelector
+      outputs={scheduler.outputs}
+      selectedId={selectedOutputId}
+      onSelect={handleOutputSelect}
+    />
 
-  <PatternBank
-    {project}
-    activePatternId={scheduler.playing ? activePatternId : project.selectedPatternId}
-    onSelect={selectPattern}
-    onDuplicate={duplicatePatternTo}
-    onClear={clearPattern}
-    onRename={renamePattern}
-  />
+    <PatternBank
+      {project}
+      activePatternId={scheduler.playing ? activePatternId : project.selectedPatternId}
+      onSelect={selectPattern}
+      onDuplicate={duplicatePatternTo}
+      onClear={clearPattern}
+      onRename={renamePattern}
+    />
 
-  <SongEditor {project} onChange={updateProject} />
+    <SidePanel {project} onChange={updateProject} />
+  </aside>
 
-  <ImportExportPanel {project} onChange={updateProject} />
+  <section id="tracks" class="tracks" class:with-side-panel={showSidePanel} aria-label="Pattern tracks">
+    <div class="tracks-header">
+      <h2>Tracks</h2>
+      <div class="track-layout-actions">
+        <button onclick={expandAll}>Expand all</button>
+        <button onclick={collapseAll}>Collapse all</button>
+      </div>
+    </div>
 
-  <section class="tracks">
-    <h2>Melodic</h2>
+    <h3>Melodic</h3>
     {#each selectedPattern.tracks.filter((t): t is MelodicTrack => t.type === 'melodic') as track}
       <MelodicTrackEditor
         {track}
         stepsPerPattern={project.stepsPerPattern}
         {currentStep}
+        collapsed={selectedPattern.collapsedTracks?.[track.id] ?? false}
+        onCollapsedChange={(collapsed) => setCollapsed(track.id, collapsed)}
         onChange={(t) => updateTrack(t)}
       />
     {/each}
 
-    <h2>Rhythmic</h2>
+    <h3>Rhythmic</h3>
     {#each selectedPattern.tracks.filter((t): t is RhythmicTrack => t.type === 'rhythmic') as track}
       <RhythmicTrackEditor
         {track}
         {currentStep}
+        collapsed={selectedPattern.collapsedTracks?.[track.id] ?? false}
+        onCollapsedChange={(collapsed) => setCollapsed(track.id, collapsed)}
         onChange={(t) => updateTrack(t)}
       />
     {/each}
@@ -185,37 +226,110 @@
 <style>
   .app {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     min-height: 100svh;
   }
 
-  .masthead {
-    padding: 20px 16px 8px;
+  .sidebar {
+    width: 320px;
+    min-width: 260px;
+    max-width: 420px;
     background: var(--panel);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    resize: horizontal;
+  }
+
+  .masthead {
+    padding: 12px 16px 6px;
+    background: var(--panel);
+    border-bottom: 1px solid var(--border);
   }
 
   .masthead h1 {
     margin: 0;
-    font-size: 1.6rem;
+    font-size: 1.3rem;
     color: var(--accent);
     letter-spacing: -0.02em;
   }
 
   .masthead p {
-    margin: 4px 0 0;
+    margin: 2px 0 0;
+    font-size: 0.75rem;
     color: var(--text-dim);
   }
 
   .tracks {
     flex: 1;
     padding: 8px 0 32px;
+    overflow-y: auto;
+    min-width: 0;
+  }
+
+  .tracks-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin: 8px 16px;
   }
 
   .tracks h2 {
-    margin: 16px 16px 8px;
+    margin: 0;
     font-size: 1rem;
     color: var(--text-h);
     text-transform: uppercase;
     letter-spacing: 0.08em;
+  }
+
+  .tracks h3 {
+    margin: 16px 16px 8px;
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  .track-layout-actions {
+    display: flex;
+    gap: 6px;
+  }
+
+  .track-layout-actions button {
+    padding: 4px 8px;
+    font-size: 0.7rem;
+  }
+
+  .skip-link {
+    position: absolute;
+    top: -40px;
+    left: 8px;
+    background: var(--accent);
+    color: #000;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-weight: 600;
+    z-index: 1000;
+    transition: top 0.12s;
+  }
+
+  .skip-link:focus {
+    top: 8px;
+  }
+
+  @media (max-width: 900px) {
+    .app {
+      flex-direction: column;
+    }
+
+    .sidebar {
+      width: 100%;
+      max-width: none;
+      border-right: none;
+      border-bottom: 1px solid var(--border);
+      resize: none;
+      max-height: 50svh;
+    }
   }
 </style>
