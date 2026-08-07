@@ -4,6 +4,7 @@ import { VitePWA } from 'vite-plugin-pwa'
 
 // https://vite.dev/config/
 export default defineConfig({
+  base: '/midi-seq/',
   server: {
     allowedHosts: ['pizzabox', 'localhost', '192.168.0.10'],
   },
