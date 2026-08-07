@@ -13,8 +13,10 @@
   let { track, currentStep, collapsed, onCollapsedChange, onChange }: Props = $props()
 
   let showEuclidean = $state(false)
-  let euclideanHits = $state(4)
-  let euclideanRotate = $state(0)
+  let euclideanBeats = $state(4)
+  // svelte-ignore state_referenced_locally
+  let euclideanLength = $state(track.steps.length)
+  let euclideanOffset = $state(0)
 
   function toggleStep(index: number) {
     const steps = [...track.steps]
@@ -29,7 +31,7 @@
   }
 
   function applyEuc() {
-    onChange(applyEuclidean(track, euclideanHits, euclideanRotate))
+    onChange(applyEuclidean(track, euclideanBeats, euclideanLength, euclideanOffset))
   }
 
   function clear() {
@@ -109,12 +111,16 @@
       {#if showEuclidean}
         <div class="euclidean-row">
           <label>
-            Hits
-            <input type="number" min="0" max={track.steps.length} bind:value={euclideanHits} />
+            Beats
+            <input type="number" min="0" max={euclideanLength} bind:value={euclideanBeats} />
           </label>
           <label>
-            Rotate
-            <input type="number" min="0" max={track.steps.length - 1} bind:value={euclideanRotate} />
+            Length
+            <input type="number" min="1" max={track.steps.length} bind:value={euclideanLength} />
+          </label>
+          <label>
+            Offset
+            <input type="number" min="0" max={euclideanLength - 1} bind:value={euclideanOffset} />
           </label>
           <button onclick={applyEuc}>Apply</button>
         </div>

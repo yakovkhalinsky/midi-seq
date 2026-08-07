@@ -3,12 +3,20 @@ import { SCALE_INTERVALS, type MelodicTrack, type RhythmicTrack, type Step } fro
 
 /**
  * Apply a Euclidean pattern to a rhythmic track.
+ * @param beats Number of active beats in the generated pattern
+ * @param length Length of the generated Euclidean pattern; the pattern is tiled across the track
+ * @param offset Number of steps to rotate the pattern clockwise
  */
-export function applyEuclidean(track: RhythmicTrack, hits: number, rotate = 0): RhythmicTrack {
-  const pattern = euclidean(track.steps.length, hits, rotate)
+export function applyEuclidean(
+  track: RhythmicTrack,
+  beats: number,
+  length = track.steps.length,
+  offset = 0
+): RhythmicTrack {
+  const pattern = euclidean(length, beats, offset)
   const steps: Step[] = track.steps.map((step, i) => ({
     ...step,
-    on: pattern[i],
+    on: pattern[i % length],
   }))
   return { ...track, steps }
 }
