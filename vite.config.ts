@@ -3,8 +3,10 @@ import { svelte } from '@sveltejs/vite-plugin-svelte'
 import { VitePWA } from 'vite-plugin-pwa'
 
 // https://vite.dev/config/
+const base = '/midi-seq/'
+
 export default defineConfig({
-  base: '/midi-seq/',
+  base,
   server: {
     allowedHosts: ['pizzabox', 'localhost', '192.168.0.10'],
   },
@@ -22,10 +24,11 @@ export default defineConfig({
         theme_color: '#16171d',
         background_color: '#16171d',
         display: 'standalone',
-        start_url: '/',
+        start_url: base,
+        scope: base,
         icons: [
           {
-            src: '/favicon.svg',
+            src: `${base}favicon.svg`,
             sizes: 'any',
             type: 'image/svg+xml',
             purpose: 'any maskable',
